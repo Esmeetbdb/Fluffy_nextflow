@@ -46,5 +46,12 @@ singularity pull library://jeisfeldt/default/fluffy:sha256.dbef92cd5eab8558c2729
 ```
 The path to all singularity containers must be specified in the config file.
 
+You will need to download/create the following files:
+```
+Reference fasta (indexed using bwa)
+WisecondorX reference files (created using the reference mode)
+PREFACE model file (optional)
+```
+
 # Config file
 An example config file can be found in the configs folder. Default parameters are specied. Read the comments in the config.conf file for more information on the individual variables.
