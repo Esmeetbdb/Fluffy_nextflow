@@ -34,7 +34,7 @@ Nextflow
 ```
 Install the dependencies then download Fluffy.
 ```
-git clone https://github.com/Esmeetbdb/Fluffy_nextflow
+git clone --recursive https://github.com/Esmeetbdb/Fluffy_nextflow
 ```
 Next, download the singularity images specified in the config.conf file.
 ```
