@@ -8,7 +8,7 @@ println "running Fluffy version ${params.version}"
 if (!params.samplesheet || !params.fastq || !params.output){
 	println "missing required parameters"
 	println "main.nf --samplesheet <samplesheet_csv> --fastq <fastq_folder> --output <output_folder>"
-	exit
+	exit 1
 }
 
 Channel
