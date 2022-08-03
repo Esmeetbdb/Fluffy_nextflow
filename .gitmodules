@@ -1,0 +1,3 @@
+[submodule "scripts/AMYCNE"]
+    path = scripts/AMYCNE
+    url = https://github.com/J35P312/AMYCNE.git

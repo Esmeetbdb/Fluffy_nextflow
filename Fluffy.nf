@@ -1,11 +1,14 @@
 params.samplesheet = false
 params.fastq = false
 params.output = false
+params.version = "0.1.0"
+
+println "running Fluffy version ${params.version}"
 
 if (!params.samplesheet || !params.fastq || !params.output){
 	println "missing required parameters"
 	println "main.nf --samplesheet <samplesheet_csv> --fastq <fastq_folder> --output <output_folder>"
-	exit o
+	exit 1
 }
 
 Channel
