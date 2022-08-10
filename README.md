@@ -50,9 +50,9 @@ Next, download the singularity images specified in the config.conf file.
 ```
 singularity pull singularity pull docker://link/to/singularity/image
 ```
-For the Fluffy singularity image use.
+For the Anaconda docker container use.
 ```
-singularity pull library://jeisfeldt/default/fluffy:sha256.dbef92cd5eab8558c2729f73a191d73a7576a24e9bb44dde7372c0cd405c4ef6
+docker pull continuumio/anaconda2
 ```
 The path to all singularity containers must be specified in the config file.
 
