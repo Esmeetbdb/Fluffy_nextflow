@@ -1,6 +1,7 @@
 params.samplesheet = false
 params.fastq = false
 params.output = false
+params.skipline = false
 params.version = "0.1.0"
 
 println "running Fluffy version ${params.version}"
@@ -11,12 +12,23 @@ if (!params.samplesheet || !params.fastq || !params.output){
 	exit 1
 }
 
-Channel
-	.fromPath( params.samplesheet )
-	.splitCsv(header: true, skip: 1)
-	.map{ row-> row.Sample_ID }
-	.unique()
-	.set{ sample_ch }
+if (!params.skipline){
+        Channel
+                .fromPath( params.samplesheet )
+                .splitCsv(header: true)
+                .map{ row->row.Sample_ID }
+                .unique()
+                .set{ sample_ch }
+}
+
+if (params.skipline){
+        Channel
+                .fromPath( params.samplesheet )
+                .splitCsv(header: true, skip: 1)
+                .map{ row->row.Sample_ID }
+                .unique()
+                .set{ sample_ch }
+}
 
 sample_ch.into { sample_ch_R1; sample_ch_r2; fastqc_R2_input_ch; fastqc_R1_input_ch }
 
