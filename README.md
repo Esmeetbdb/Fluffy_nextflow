@@ -22,7 +22,12 @@ FCID,Lane,Sample_ID,SampleRef,index,index2,SampleName,Control,Recipe,Operator,Sa
 There should be one comm-separated line for each sample to be analyzed
 
 ##### Fastq folder
-The folder with fastq files should contain one folder for each sample to be analysed. The folder names should be 'Sample_{Sample_ID}'.
+The folder with fastq files should contain one folder for each sample to be analysed. The folder names should contain {Sample_ID}. The standard prefix is 'Sample_' resulting in folder name Sample_{Sample_ID}. If folder prefix is different add:
+```
+--prefix prefix
+```
+to the run command.
+
 Inside this folder should be all the fastq files for the sample. There should be at least one file for the forward reads and one file for reverse reads. If multiple lanes are used during sequencing this is not a problem. The file names should be '\*{sample_ID}\*\_R1\*fastq.gz' for forward reads and '\*{sample_ID}\*\_R2\*fastq.gz' for reverse reads.
 **All fastq files should be gzipped**
 
