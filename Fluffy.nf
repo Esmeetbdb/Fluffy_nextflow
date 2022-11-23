@@ -1,19 +1,35 @@
 params.samplesheet = false
 params.fastq = false
 params.output = false
+params.skipline = false
+params.prefix = Sample_
+params.version = "0.1.0"
+
+println "running Fluffy version ${params.version}"
 
 if (!params.samplesheet || !params.fastq || !params.output){
 	println "missing required parameters"
 	println "main.nf --samplesheet <samplesheet_csv> --fastq <fastq_folder> --output <output_folder>"
-	exit o
+	exit 1
 }
 
-Channel
-	.fromPath( params.samplesheet )
-	.splitCsv(header: true, skip: 1)
-	.map{ row-> row.Sample_ID }
-	.unique()
-	.set{ sample_ch }
+if (!params.skipline){
+        Channel
+                .fromPath( params.samplesheet )
+                .splitCsv(header: true)
+                .map{ row->row.Sample_ID }
+                .unique()
+                .set{ sample_ch }
+}
+
+if (params.skipline){
+        Channel
+                .fromPath( params.samplesheet )
+                .splitCsv(header: true, skip: 1)
+                .map{ row->row.Sample_ID }
+                .unique()
+                .set{ sample_ch }
+}
 
 sample_ch.into { sample_ch_R1; sample_ch_r2; fastqc_R2_input_ch; fastqc_R1_input_ch }
 
@@ -29,7 +45,7 @@ process bwa_aln_R1 {
 		set val(sampleID),file("${sampleID}/${sampleID}_R1.sai") into bwa_aln_R1_ch
 
 	script:
-		def R1 = "<( zcat ${params.fastq}/Sample_${sampleID}/*${sampleID}*_R1*fastq.gz )"
+		def R1 = "<( zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R1*fastq.gz )"
 
 		"""
 		mkdir -p ${sampleID}
@@ -49,7 +65,7 @@ process fastqc_R1 {
 	script:
 		"""
 		mkdir -p ${sampleID}
-		zcat ${params.fastq}/Sample_${sampleID}/*${sampleID}*_R1*fastq.gz | fastqc stdin:${sampleID}_R1 -o ${sampleID}
+		zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R1*fastq.gz | fastqc stdin:${sampleID}_R1 -o ${sampleID}
 		"""
 }		
 
@@ -65,7 +81,7 @@ process bwa_aln_R2 {
                 set val(sampleID),file("${sampleID}/${sampleID}_R2.sai") into bwa_aln_R2_ch
 
         script:
-                def R2 = "<( zcat ${params.fastq}/Sample_${sampleID}/*${sampleID}*_R2*fastq.gz )"
+                def R2 = "<( zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R2*fastq.gz )"
 
                 """
 		mkdir -p ${sampleID}
@@ -86,7 +102,7 @@ process fastqc_R2 {
         script:
                 """
 		mkdir -p ${sampleID}
-		zcat ${params.fastq}/Sample_${sampleID}/*${sampleID}*_R2*fastq.gz | fastqc stdin:${sampleID}_R2 -o ${sampleID}
+		zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R2*fastq.gz | fastqc stdin:${sampleID}_R2 -o ${sampleID}
                 """
 }
 
@@ -106,8 +122,8 @@ process bwa_sampe {
                 set val(sampleID),file("${sampleID}/${sampleID}_sampe.sam") into bwa_sampe_output_ch
 
         script:
-                def R1 = "<( zcat ${params.fastq}/Sample_${sampleID}/*${sampleID}*_R1*fastq.gz )"
-                def R2 = "<( zcat ${params.fastq}/Sample_${sampleID}/*${sampleID}*_R2*fastq.gz )"
+                def R1 = "<( zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R1*fastq.gz )"
+                def R2 = "<( zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R2*fastq.gz )"
 
                 """
                 bwa sampe -n -1 ${params.reference} ${sampleID}/${sampleID}_R1.sai ${sampleID}/${sampleID}_R2.sai ${R1} ${R2} > ${sampleID}/${sampleID}_sampe.sam

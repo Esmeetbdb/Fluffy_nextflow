@@ -6,6 +6,11 @@ Fluffy is an NIPT analysis pipeline written in Python and Nextflow. Fluffy predi
 Fluffy can be directly run in Nextflow using:
     nextflow run Fluffy.nf --samplesheet /path/to/samplesheet.csv --fastq /path/to/fastq/folder --output /path/to/output/folder -c config.conf
 ```
+If the Samplesheet file has a line before the header add the following to the command: 
+```
+--skipline true
+```
+
 ### Input
 The Fluffy pipeline requires two distinct inputs: the samplesheet and the a folder with fastq files per sample.
 ##### Samplesheet
@@ -17,7 +22,12 @@ FCID,Lane,Sample_ID,SampleRef,index,index2,SampleName,Control,Recipe,Operator,Sa
 There should be one comm-separated line for each sample to be analyzed
 
 ##### Fastq folder
-The folder with fastq files should contain one folder for each sample to be analysed. The folder names should be 'Sample_{Sample_ID}'.
+The folder with fastq files should contain one folder for each sample to be analysed. The folder names should contain {Sample_ID}. The standard prefix is 'Sample_' resulting in folder name Sample_{Sample_ID}. If folder prefix is different add:
+```
+--prefix prefix
+```
+to the run command.
+
 Inside this folder should be all the fastq files for the sample. There should be at least one file for the forward reads and one file for reverse reads. If multiple lanes are used during sequencing this is not a problem. The file names should be '\*{sample_ID}\*\_R1\*fastq.gz' for forward reads and '\*{sample_ID}\*\_R2\*fastq.gz' for reverse reads.
 **All fastq files should be gzipped**
 
@@ -34,15 +44,15 @@ Nextflow
 ```
 Install the dependencies then download Fluffy.
 ```
-git clone https://github.com/Esmeetbdb/Fluffy_nextflow
+git clone --recursive https://github.com/Esmeetbdb/Fluffy_nextflow
 ```
 Next, download the singularity images specified in the config.conf file.
 ```
 singularity pull singularity pull docker://link/to/singularity/image
 ```
-For the Fluffy singularity image use.
+For the Anaconda docker container use.
 ```
-singularity pull library://jeisfeldt/default/fluffy:sha256.dbef92cd5eab8558c2729f73a191d73a7576a24e9bb44dde7372c0cd405c4ef6
+docker pull continuumio/anaconda2
 ```
 The path to all singularity containers must be specified in the config file.
 
