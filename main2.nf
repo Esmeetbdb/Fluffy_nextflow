@@ -1,15 +1,13 @@
-//nextflow.enable.dsl=2
+nextflow.enable.dsl=2
 
 params.samplesheet = false
 params.fastq = false
 params.output = false
 params.skipline = false
 params.prefix = "Sample_"
-params.version = "0.2.0"
+params.version = "1.0.0"
 
 println "running Fluffy version ${params.version}"
-
-//include { FLUFFY } from './workflows/fluffy'
 
 if (!params.samplesheet || !params.fastq || !params.output){
 	println "missing required parameters"
@@ -17,6 +15,7 @@ if (!params.samplesheet || !params.fastq || !params.output){
 	exit 1
 }
 
+//Read samplesheet
 if (!params.skipline){
         Channel
                 .fromPath( params.samplesheet )
@@ -35,183 +34,35 @@ if (params.skipline){
                 .set{ sample_ch }
 }
 
-sample_ch.into { sample_ch_R1; sample_ch_r2; fastqc_R2_input_ch; fastqc_R1_input_ch }
+//Load modules
+include {  bwa_aln_R1; bwa_aln_R2; bwa_sampe; samtools_sort;picard_md} from './modules/preproccess.nf'
+include {  fastqc_R1; fastqc_R2; collect_gc_bias; collect_insert_size; estimate_complexity} from './modules/qc.nf'
+
+//main workflow
+workflow{
+
+	//Align and sort
+	bwa_aln_R1_ch=bwa_aln_R1(sample_ch)
+	bwa_aln_R2_ch=bwa_aln_R2(sample_ch)
+
+	fastqc_R1_output_ch=fastqc_R1(sample_ch)
+	fastqc_R2_output_ch=fastqc_R2(sample_ch)
+
+	bwa_sampe_input_ch = bwa_aln_R1_ch.cross(bwa_aln_R2_ch).map{
+        	it ->  [it[0][0],it[0][1],it[1][1]]
+	}
+
+	bwa_sampe_output_ch=bwa_sampe(bwa_sampe_input_ch)
+
+	samtools_sort_output_ch=samtools_sort(bwa_sampe_output_ch)
+
+	//picard QC
+	picard_md_output_ch=picard_md(samtools_sort_output_ch)
+	collect_gcbias_bam_ch=collect_gc_bias(picard_md_output_ch)
+	insert_size_output_ch=collect_insert_size(picard_md_output_ch)
+	complexity_metrics_ch=estimate_complexity(picard_md_output_ch)
 
 
-
-process bwa_aln_R1 {
-	publishDir "${params.output}", mode: 'copy', overwrite: true
-	errorStrategy 'ignore'
-
-	input:
-		val(sampleID) from sample_ch_R1
-
-	output:
-		set val(sampleID),file("${sampleID}/${sampleID}_R1.sai") into bwa_aln_R1_ch
-
-	script:
-		def R1 = "<( zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R1*fastq.gz )"
-
-		"""
-		mkdir -p ${sampleID}
-		bwa aln -n 0 -k 0 -t ${task.cpus} ${params.reference} ${R1} > ${sampleID}/${sampleID}_R1.sai
-		"""
-}
-
-process fastqc_R1 {
-	publishDir "${params.output}", mode: 'copy', overwrite: true
-        errorStrategy 'ignore'
-
-        input:
-		val(sampleID) from fastqc_R1_input_ch
-	output:
-		set val(sampleID),file("${sampleID}/*fastqc.*") into fastqc_R1_output_ch
-	script:
-		"""
-		mkdir -p ${sampleID}
-		zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R1*fastq.gz | fastqc stdin:${sampleID}_R1 -o ${sampleID}
-		"""
-}		
-
-process bwa_aln_R2 {
-        publishDir "${params.output}", mode: 'copy', overwrite: true
-	errorStrategy 'ignore'
-
-        input:
-                val(sampleID) from sample_ch_r2
-
-        output:
-                set val(sampleID),file("${sampleID}/${sampleID}_R2.sai") into bwa_aln_R2_ch
-
-        script:
-                def R2 = "<( zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R2*fastq.gz )"
-
-                """
-		mkdir -p ${sampleID}
-                bwa aln -n 0 -k 0 -t ${task.cpus} ${params.reference} ${R2} > ${sampleID}/${sampleID}_R2.sai
-                """
-}
-
-process fastqc_R2 {
-        publishDir "${params.output}", mode: 'copy', overwrite: true
-        errorStrategy 'ignore'
-
-        input:
-                val(sampleID) from fastqc_R2_input_ch
-	output:
-		set val(sampleID), file("${sampleID}/*fastqc.*") into fastqc_R2_output_ch
-
-        script:
-                """
-		mkdir -p ${sampleID}
-		zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R2*fastq.gz | fastqc stdin:${sampleID}_R2 -o ${sampleID}
-                """
-}
-
-bwa_sampe_input_ch = bwa_aln_R1_ch.cross(bwa_aln_R2_ch).map{
-        it ->  [it[0][0],it[0][1],it[1][1]]
-    }
-
-
-process bwa_sampe {
-        publishDir "${params.output}", mode: 'copy', overwrite: true
-	errorStrategy 'ignore'
-
-        input:
-		set val(sampleID),file("${sampleID}/${sampleID}_R1.sai"),file("${sampleID}/${sampleID}_R2.sai") from bwa_sampe_input_ch
-        output:
-                set val(sampleID),file("${sampleID}/${sampleID}_sampe.sam") into bwa_sampe_output_ch
-
-        script:
-                def R1 = "<( zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R1*fastq.gz )"
-                def R2 = "<( zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R2*fastq.gz )"
-
-                """
-                bwa sampe -n -1 ${params.reference} ${sampleID}/${sampleID}_R1.sai ${sampleID}/${sampleID}_R2.sai ${R1} ${R2} > ${sampleID}/${sampleID}_sampe.sam
-		"""
-}
-
-
-process samtools_sort {
-        publishDir "${params.output}", mode: 'copy', overwrite: true
-        errorStrategy 'ignore'
-
-        input:
-                set val(sampleID),file("${sampleID}/${sampleID}_sampe.sam") from bwa_sampe_output_ch
-
-        output:
-                set val(sampleID),file("${sampleID}/${sampleID}.tmp.bam") into samtools_sort_output_ch
-
-        script:
-                """
-                samtools sort --output-fmt bam ${sampleID}/${sampleID}_sampe.sam -@ 8 -m 2G -T ${sampleID}/${sampleID}.tmp > ${sampleID}/${sampleID}.tmp.bam
-                """
-}
-
-process picard_md {
-	publishDir "${params.output}", mode: 'copy', overwrite: true
-        errorStrategy 'ignore'
-
-	input:
-		set val(sampleID) ,file("${sampleID}/${sampleID}.tmp.bam") from samtools_sort_output_ch
-
-	output:
-		set val(sampleID),file("${sampleID}/${sampleID}.bam"),file("${sampleID}/${sampleID}.bai"),file("${sampleID}/${sampleID}.md.txt") into picard_md_output_ch
-
-	script:
-		"""
-		picard MarkDuplicates I=${sampleID}/${sampleID}.tmp.bam O=${sampleID}/${sampleID}.bam M=${sampleID}/${sampleID}.md.txt CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT  TMP_DIR=${params.tmpdir}
-		rm ${sampleID}/${sampleID}.tmp.bam
-		"""
-}
-
-picard_md_output_ch.into { wcx_convert_bam_ch; tiddit_bam_ch; collect_gcbias_bam_ch;  collect_insertsize_bam_ch; collect_estimatecomplexity_bam_ch }
-
-process collect_gc_bias {
-	publishDir "${params.output}", mode: 'copy', overwrite: true
-        errorStrategy 'ignore'
-
-	input:
-		set val(sampleID),file("${sampleID}/${sampleID}.bam"),file("${sampleID}/${sampleID}.bai"),file("${sampleID}/${sampleID}.md.txt") from collect_gcbias_bam_ch
-
-	output:
-		set val(sampleID),file("${sampleID}/${sampleID}.gc_bias_metrics.txt"),file("${sampleID}/${sampleID}.gc_bias_metrics.pdf"),file("${sampleID}/${sampleID}.gc.summary.tab") into gc_bias_output_ch
-
-	script:
-		"""
-		picard CollectGcBiasMetrics I=${sampleID}/${sampleID}.bam O=${sampleID}/${sampleID}.gc_bias_metrics.txt CHART=${sampleID}/${sampleID}.gc_bias_metrics.pdf S=${sampleID}/${sampleID}.gc.summary.tab R=${params.reference} VALIDATION_STRINGENCY=LENIENT TMP_DIR=${params.tmpdir}
-		"""
-}
-
-process collect_insert_size {
-	publishDir "${params.output}", mode: 'copy', overwrite: true
-        errorStrategy 'ignore'
-
-        input:
-		set val(sampleID),file("${sampleID}/${sampleID}.bam"),file("${sampleID}/${sampleID}.bai"),file("${sampleID}/${sampleID}.md.txt") from collect_insertsize_bam_ch
-	output:
-		set val(sampleID),file("${sampleID}/${sampleID}.insert_size_metrics.txt"),file("${sampleID}/${sampleID}.insert_size_histogram.pdf") into insert_size_output_ch
-
-	script:
-		"""
-		picard CollectInsertSizeMetrics I=${sampleID}/${sampleID}.bam O=${sampleID}/${sampleID}.insert_size_metrics.txt H=${sampleID}/${sampleID}.insert_size_histogram.pdf VALIDATION_STRINGENCY=LENIENT M=0.5 TMP_DIR=${params.tmpdir}
-		"""
-}
-
-process estimate_complexity {
-	publishDir "${params.output}", mode: 'copy', overwrite: true
-        errorStrategy 'ignore'
-
-        input:
-		set val(sampleID),file("${sampleID}/${sampleID}.bam"),file("${sampleID}/${sampleID}.bai"),file("${sampleID}/${sampleID}.md.txt") from collect_estimatecomplexity_bam_ch
-	
-	output:
-		set val(sampleID),file("${sampleID}/${sampleID}.complex_metrics.txt") into complexity_metrics_ch
-
-	script:
-		"""
-		picard EstimateLibraryComplexity I=${sampleID}/${sampleID}.bam O=${sampleID}/${sampleID}.complex_metrics.txt VALIDATION_STRINGENCY=LENIENT TMP_DIR=${params.tmpdir}
-		"""
 }
 
 process wcx_convert {
