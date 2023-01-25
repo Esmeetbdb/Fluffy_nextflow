@@ -4,7 +4,7 @@ Fluffy is an NIPT analysis pipeline written in Python and Nextflow. Fluffy predi
 # Run
 ```
 Fluffy can be directly run in Nextflow using:
-    nextflow run Fluffy.nf --samplesheet /path/to/samplesheet.csv --fastq /path/to/fastq/folder --output /path/to/output/folder -c config.conf
+    nextflow run main.nf --samplesheet /path/to/samplesheet.csv --fastq /path/to/fastq/folder --output /path/to/output/folder -c config.conf
 ```
 If the Samplesheet file has a line before the header add the following to the command: 
 ```
