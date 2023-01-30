@@ -75,3 +75,34 @@ process estimate_complexity {
 		picard EstimateLibraryComplexity I=${sampleID}/${sampleID}.bam O=${sampleID}/${sampleID}.complex_metrics.txt VALIDATION_STRINGENCY=LENIENT TMP_DIR=${params.tmpdir}
 		"""
 }
+
+process samtools_flagstat {
+	publishDir "${params.output}", mode: 'copy', overwrite: true
+        errorStrategy 'ignore'
+
+        input:
+		tuple val(sampleID),file("${sampleID}/${sampleID}.bam"),file("${sampleID}/${sampleID}.bai"),file("${sampleID}/${sampleID}.md.txt")
+	
+	output:
+		tuple val(sampleID),file("${sampleID}/${sampleID}.flagstat.txt")
+
+	script:
+		"""
+		samtools flagstat ${sampleID}/${sampleID}.bam > ${sampleID}/${sampleID}.flagstat.txt  
+		"""
+}
+process samtools_stat {
+	publishDir "${params.output}", mode: 'copy', overwrite: true
+        errorStrategy 'ignore'
+
+        input:
+		tuple val(sampleID),file("${sampleID}/${sampleID}.bam"),file("${sampleID}/${sampleID}.bai"),file("${sampleID}/${sampleID}.md.txt")
+	
+	output:
+		tuple val(sampleID),file("${sampleID}/${sampleID}.samstat.txt")
+
+	script:
+		"""
+		samtools stats --coverage 0,50,1 ${sampleID}/${sampleID}.bam > ${sampleID}/${sampleID}.samstat.txt 
+		"""
+}
