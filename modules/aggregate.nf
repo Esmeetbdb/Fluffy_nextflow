@@ -21,7 +21,7 @@ process multiQC {
 
 	input:
 		path(out_dir)
-		path(qc_files)
+		val(qc_files)
 
 	output:
 		file("${out_dir}/multiqc_report.html")

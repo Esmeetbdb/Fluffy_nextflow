@@ -20,23 +20,23 @@ process wcx_predict {
 	input:
 		tuple val(sampleID),file("${sampleID}/${sampleID}.bam.wcx.npz")
 	output:
-		tuple val(sampleID),file("${sampleID}/${sampleID}_WCXpredict_aberrations.bed"),file("${sampleID}/${sampleID}_WCXpredict_chr_statistics.txt"),file("${sampleID}/${sampleID}_WCXpredict_segments.bed"),file("${sampleID}/${sampleID}_WCXpredict_bins.bed"),file("${sampleID}/${sampleID}_WCXpredict.plots/*")
+		tuple val(sampleID),file("${sampleID}/${sampleID}_WCXpredict_aberrations.bed"),file("${sampleID}/${sampleID}_WCXpredict_statistics.txt"),file("${sampleID}/${sampleID}_WCXpredict_segments.bed"),file("${sampleID}/${sampleID}_WCXpredict_bins.bed"),file("${sampleID}/${sampleID}_WCXpredict.plots/*")
 
 	script:
 		"""
-		WisecondorX --loglevel info predict ${sampleID}/${sampleID}.bam.wcx.npz ${params.wcx_reference} ${sampleID}/${sampleID}_WCXpredict --blacklist ${params.blacklist} --bed --plots --zscore ${params.wcxZscore} 
+		WisecondorX --loglevel info predict ${sampleID}/${sampleID}.bam.wcx.npz ${params.wcx_reference} ${sampleID}/${sampleID}_WCXpredict --blacklist ${params.blacklist} --bed --plot --zscore ${params.wcxZscore} 
 		"""
 }
 
 process wcx_predict_preface {
         publishDir "${params.output}", mode: 'copy', overwrite: true
-        errorStrategy 'ignore'
+        //errorStrategy 'ignore'
 
         input:
 		tuple val(sampleID),file("${sampleID}/${sampleID}.bam.wcx.npz")
 
         output:
-		tuple val(sampleID),file("${sampleID}/${sampleID}_WCXpredict.preface_aberrations.bed"),file("${sampleID}/${sampleID}_WCXpredict.preface_chr_statistics.txt"),file("${sampleID}/${sampleID}_WCXpredict.preface_segments.bed"),file("${sampleID}/${sampleID}_WCXpredict.preface_bins.bed")
+		tuple val(sampleID),file("${sampleID}/${sampleID}_WCXpredict.preface_aberrations.bed"),file("${sampleID}/${sampleID}_WCXpredict.preface_statistics.txt"),file("${sampleID}/${sampleID}_WCXpredict.preface_segments.bed"),file("${sampleID}/${sampleID}_WCXpredict.preface_bins.bed")
 
         script:
                 """

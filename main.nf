@@ -68,7 +68,7 @@ workflow{
 	wcx_convert_output_ch = wcx_convert(picard_md_output_ch)
 	wcx_predict_output_ch = wcx_predict(wcx_convert_output_ch)
 	wcx_gender_output_ch = wcx_gender(wcx_convert_output_ch)
-	wcx_preface_predict_output_ch = wcx_predict_preface(wcx_convert_output_ch
+	wcx_preface_predict_output_ch = wcx_predict_preface(wcx_convert_output_ch)
 
 	//run fetal fraction prediction tools
 	gc_tab_output_ch = get_gctab()
