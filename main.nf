@@ -86,6 +86,8 @@ workflow{
 	summarize_ch = summarize_ch.join(wcx_predict_output_ch)
 	summarize_ch = summarize_ch.join(preface_predict_output_ch)
 	summarize_ch = summarize_ch.join(insert_size_output_ch)
+	summarize_ch = summarize_ch.join(gc_bias_output_ch)
+	summarize_ch = summarize_ch.collect{it[1..-1]}
 
 	multiQC_ch = picard_md_output_ch.join(gc_bias_output_ch)
 	multiQC_ch = multiQC_ch.join(insert_size_output_ch)

@@ -316,7 +316,7 @@ for sample in samples:
 
 for sample in samples:
     for file in files_in_folder:
-        if sample +"/"+sample in file and file.endswith("WCXpredict_chr_statistics.txt"):
+        if sample +"/"+sample in file and file.endswith("WCXpredict_statistics.txt"):
             for line in open(file):
                 if "ratio" in line:
                     continue
@@ -382,10 +382,10 @@ for sample in samples:
                     ratio_X.append(float(content[1]) + 1)
                     samples[sample]["Zscore_X"] = content[-1]
 
-                if "Median segment variance (per bin): " in line:
+                if "Median segment variance " in line:
                     samples[sample]["Bin2BinVariance"] = (
                         line.strip()
-                        .split("Median segment variance (per bin): ")[-1]
+                        .split(": ")[-1]
                         .strip()
                     )
                     if float(samples[sample]["Bin2BinVariance"]) > args.maxbin2bin:
