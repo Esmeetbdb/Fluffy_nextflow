@@ -106,3 +106,17 @@ process samtools_stat {
 		samtools stats --coverage 0,50,1 ${sampleID}/${sampleID}.bam > ${sampleID}/${sampleID}.samstat.txt 
 		"""
 }
+process coverage_summary {
+	publishDir "${params.output}", mode: 'copy', overwrite: true
+        errorStrategy 'ignore'
+
+        input:
+		tuple val(sampleID),file("${sampleID}/${sampleID}.tiddit.tab")
+	output:
+		tuple val(sampleID),file("${sampleID}/${sampleID}_coverage_mqc.txt")
+
+	script:
+		"""
+		python ${params.script_folder}/make_coverage_distribution.py ${sampleID}/${sampleID}.tiddit.tab  > ${sampleID}/${sampleID}_coverage_mqc.txt
+		"""
+}

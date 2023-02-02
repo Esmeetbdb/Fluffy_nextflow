@@ -126,7 +126,6 @@ output_header = [
     "CNVSegment",
 ]
 
-print('"' + '","'.join(output_header) + '"')
 
 first = True
 samplesheet_info = []
@@ -218,6 +217,7 @@ sample_out = {
 }
 
 exclude_column=False
+prefix="sample"
 for line in open(args.samplesheet):
     if not " " in line:
         line=line.replace(","," ")
@@ -262,6 +262,7 @@ for line in open(args.samplesheet):
             samples[sample]["Flowcell"] = entry
         elif samplesheet_info[i] == "Project" or samplesheet_info[i] == "Sample_Project":
             samples[sample]["SampleProject"] = entry
+            prefix=entry
         elif samplesheet_info[i] == "index" or samplesheet_info[i] == "index1":
             samples[sample]["Index1"] = entry
         elif samplesheet_info[i] == "index2":
@@ -541,8 +542,12 @@ for sample in samples:
             except:
                 pass
 
+f=open("{}_NIPT.csv".format(prefix),"w")
+f.write('"' + '","'.join(output_header) + '"' + "\n")
 for sample in samples:
     out = []
     for entry in output_header:
         out.append(str(samples[sample][entry]))
-    print('"' + '","'.join(out) + '"')
+    f.write('"' + '","'.join(out) + '"' + "\n")
+
+f.close()

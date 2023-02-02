@@ -1,5 +1,4 @@
 process bwa_aln_R1 {
-        publishDir "${params.output}", mode: 'copy', overwrite: true
         errorStrategy 'ignore'
 
         input:
@@ -18,7 +17,6 @@ process bwa_aln_R1 {
 }
 
 process bwa_aln_R2 {
-        publishDir "${params.output}", mode: 'copy', overwrite: true
         errorStrategy 'ignore'
 
         input:
@@ -37,7 +35,6 @@ process bwa_aln_R2 {
 }
 
 process bwa_sampe {
-        publishDir "${params.output}", mode: 'copy', overwrite: true
         errorStrategy 'ignore'
 
         input:
@@ -56,18 +53,17 @@ process bwa_sampe {
 
 
 process samtools_sort {
-        publishDir "${params.output}", mode: 'copy', overwrite: true
         errorStrategy 'ignore'
 
         input:
               	tuple val(sampleID),file("${sampleID}/${sampleID}_sampe.sam")
 
         output:
-               	tuple val(sampleID),file("${sampleID}/${sampleID}.tmp.bam")
+               	tuple val(sampleID),file("${sampleID}.bam")
 
         script:
                	"""
-                samtools sort --output-fmt bam ${sampleID}/${sampleID}_sampe.sam -@ 8 -m 2G -T ${sampleID}/${sampleID}.tmp > ${sampleID}/${sampleID}.tmp.bam
+                samtools sort --output-fmt bam ${sampleID}/${sampleID}_sampe.sam -@ ${task.cpus} -m 2G -T ${sampleID}.tmp > ${sampleID}.bam
                 """
 }
 
@@ -76,14 +72,14 @@ process picard_md {
         errorStrategy 'ignore'
 
 	input:
-		tuple val(sampleID) ,file("${sampleID}/${sampleID}.tmp.bam")
+		tuple val(sampleID) ,file("${sampleID}.bam")
 
 	output:
 		tuple val(sampleID),file("${sampleID}/${sampleID}.bam"),file("${sampleID}/${sampleID}.bai"),file("${sampleID}/${sampleID}.md.txt")
 
 	script:
 		"""
-		picard MarkDuplicates I=${sampleID}/${sampleID}.tmp.bam O=${sampleID}/${sampleID}.bam M=${sampleID}/${sampleID}.md.txt CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT  TMP_DIR=${params.tmpdir}
-		rm ${sampleID}/${sampleID}.tmp.bam
+		mkdir -p ${sampleID}
+		picard MarkDuplicates I=${sampleID}.bam O=${sampleID}/${sampleID}.bam M=${sampleID}/${sampleID}.md.txt CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT  TMP_DIR=${params.tmpdir}
 		"""
 }
