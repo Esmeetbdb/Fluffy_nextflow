@@ -32,12 +32,20 @@ if (!params.skipline){
 		.set{ sample_ch }
 }
 
+
+if(params.output[0] ==  "/"){
+	output_absolute_path=params.output
+}else{
+	output_absolute_path="${launchDir}/${params.output}"
+}
+println output_absolute_path
+
 //Load modules
 include {bwa_aln_R1; bwa_aln_R2; bwa_sampe; samtools_sort;picard_md} from './modules/preproccess.nf'
 include {fastqc_R1; fastqc_R2; collect_gc_bias; collect_insert_size; estimate_complexity; samtools_flagstat; samtools_stat; coverage_summary} from './modules/qc.nf'
 include {wcx_convert; wcx_predict; wcx_predict_preface; wcx_gender} from './modules/wisecondor.nf'
 include {preface_predict; tiddit; get_gctab; run_amyce} from './modules/fetalfraction.nf'
-include {summarize; multiQC} from './modules/aggregate.nf'
+include {summarize; multiQC; make_deliverables_yaml} from './modules/aggregate.nf'
 
 samplesheet=file(params.samplesheet)
 
@@ -101,4 +109,7 @@ workflow{
 
 	summary_output_ch = summarize(output_path,summarize_ch,samplesheet)
 	multiQC_output_ch = multiQC(output_path,multiQC_ch)
+
+	deliverables_yaml_ch = make_deliverables_yaml( output_absolute_path ,multiQC_output_ch,summary_output_ch)
+
 }

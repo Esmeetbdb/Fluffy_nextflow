@@ -24,10 +24,28 @@ process multiQC {
 		val(qc_files)
 
 	output:
-		file("${out_dir}/multiqc_report.html")
+		file("multiqc_report.html")
 
 	script:
 		"""
-		multiqc ${out_dir}/**/ --outdir $out_dir
+		multiqc ${out_dir}/**/
+		"""
+}
+
+process make_deliverables_yaml {
+	publishDir "${params.output}", mode: 'copy', overwrite: true
+        errorStrategy 'ignore'
+
+	input:
+		path(out_dir)
+		val(multiqc)
+		val(summary)
+
+	output:
+		file("deliverables.yaml")
+
+	script:
+		"""
+		python ${params.script_folder}/make_deliverables_yaml.py ${out_dir}
 		"""
 }
