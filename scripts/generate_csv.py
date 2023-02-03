@@ -126,7 +126,6 @@ output_header = [
     "CNVSegment",
 ]
 
-print('"' + '","'.join(output_header) + '"')
 
 first = True
 samplesheet_info = []
@@ -218,6 +217,7 @@ sample_out = {
 }
 
 exclude_column=False
+prefix="sample"
 for line in open(args.samplesheet):
     if not " " in line:
         line=line.replace(","," ")
@@ -262,6 +262,7 @@ for line in open(args.samplesheet):
             samples[sample]["Flowcell"] = entry
         elif samplesheet_info[i] == "Project" or samplesheet_info[i] == "Sample_Project":
             samples[sample]["SampleProject"] = entry
+            prefix=entry
         elif samplesheet_info[i] == "index" or samplesheet_info[i] == "index1":
             samples[sample]["Index1"] = entry
         elif samplesheet_info[i] == "index2":
@@ -315,7 +316,7 @@ for sample in samples:
 
 for sample in samples:
     for file in files_in_folder:
-        if sample +"/"+sample in file and file.endswith("WCXpredict_chr_statistics.txt"):
+        if sample +"/"+sample in file and file.endswith("WCXpredict_statistics.txt"):
             for line in open(file):
                 if "ratio" in line:
                     continue
@@ -381,10 +382,10 @@ for sample in samples:
                     ratio_X.append(float(content[1]) + 1)
                     samples[sample]["Zscore_X"] = content[-1]
 
-                if "Median segment variance (per bin): " in line:
+                if "Median segment variance " in line:
                     samples[sample]["Bin2BinVariance"] = (
                         line.strip()
-                        .split("Median segment variance (per bin): ")[-1]
+                        .split(": ")[-1]
                         .strip()
                     )
                     if float(samples[sample]["Bin2BinVariance"]) > args.maxbin2bin:
@@ -541,8 +542,12 @@ for sample in samples:
             except:
                 pass
 
+f=open("{}_NIPT.csv".format(prefix),"w")
+f.write('"' + '","'.join(output_header) + '"' + "\n")
 for sample in samples:
     out = []
     for entry in output_header:
         out.append(str(samples[sample][entry]))
-    print('"' + '","'.join(out) + '"')
+    f.write('"' + '","'.join(out) + '"' + "\n")
+
+f.close()

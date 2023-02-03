@@ -4,9 +4,10 @@ Fluffy is an NIPT analysis pipeline written in Python and Nextflow. Fluffy predi
 # Run
 ```
 Fluffy can be directly run in Nextflow using:
-    nextflow run Fluffy.nf --samplesheet /path/to/samplesheet.csv --fastq /path/to/fastq/folder --output /path/to/output/folder -c config.conf
+    nextflow main.nf --samplesheet /path/to/samplesheet.csv --fastq /path/to/fastq/folder --output /path/to/output/folder -c config.conf
 ```
-If the Samplesheet file has a line before the header add the following to the command: 
+Typically, the samplesheet and fastq folder is produced through demultiplexing.
+If the Samplesheet file has a line before the header  (commonly "[Data]") add the following to the command: 
 ```
 --skipline true
 ```
@@ -44,17 +45,8 @@ Nextflow
 ```
 Install the dependencies then download Fluffy.
 ```
-git clone --recursive https://github.com/Esmeetbdb/Fluffy_nextflow
+git clone --recursive https://github.com/Clinical-Genomics/Fluffy_nextflow.git
 ```
-Next, download the singularity images specified in the config.conf file.
-```
-singularity pull singularity pull docker://link/to/singularity/image
-```
-For the Anaconda docker container use.
-```
-docker pull continuumio/anaconda2
-```
-The path to all singularity containers must be specified in the config file.
 
 You will need to download/create the following files:
 ```
