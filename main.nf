@@ -4,7 +4,7 @@ params.samplesheet = false
 params.fastq = false
 params.output = false
 params.skipline = false
-params.prefix = "Sample_"
+params.prefix = ""
 params.version = "1.0.0"
 
 println "running Fluffy version ${params.version}"

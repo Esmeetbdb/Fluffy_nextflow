@@ -9,7 +9,7 @@ process preface_predict {
 
 	script:
 		"""
-		Rscript /bin/PREFACE-0.1.1/PREFACE.R predict --infile ${sampleID}/${sampleID}_WCXpredict.preface_bins.bed --model ${params.model} > ${sampleID}/${sampleID}_bins.bed.PREFACE.txt
+		Rscript ${params.script_folder}/PREFACE/PREFACE.R predict --infile ${sampleID}/${sampleID}_WCXpredict.preface_bins.bed --model ${params.model} > ${sampleID}/${sampleID}_bins.bed.PREFACE.txt
 		"""
 }	
 	

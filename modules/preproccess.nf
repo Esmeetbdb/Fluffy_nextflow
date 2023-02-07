@@ -26,7 +26,8 @@ process bwa_aln_R2 {
                 tuple val(sampleID),file("${sampleID}/${sampleID}_R2.sai")
 
         script:
-               	def R2 = "<( zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R2*fastq.gz )"
+
+	        def R2 = "<( zcat ${params.fastq}/${params.prefix}${sampleID}/*${sampleID}*_R2*fastq.gz )"
 
                 """
                 mkdir -p ${sampleID}
